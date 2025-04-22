@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cambiarestadoprocedimientos-service
+spec:
+  selector:
+    app: cambiarestadoprocedimientos
+  ports:
+    - protocol: TCP
+      port: 3000        # Puerto dentro del clúster
+      targetPort: 3000   # Puerto que expone tu aplicación
+      nodePort: 30001    # Puerto en el nodo (cambiar a otro puerto si 30001 ya está en uso)
+  type: NodePort

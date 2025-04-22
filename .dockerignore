@@ -1,0 +1,39 @@
+# Ignorar dependencias locales
+node_modules
+.pnpm
+yarn.lock
+
+# Ignorar archivos de construcción
+.next
+dist
+build
+
+# Ignorar configuraciones específicas del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Ignorar archivos de depuración y logs
+npm-debug.log
+pnpm-debug.log
+yarn-error.log
+*.log
+
+# Ignorar carpetas de control de versiones
+.git
+.gitignore
+
+# Ignorar configuraciones de IDE/editores
+.vscode
+.idea
+*.swp
+
+# Ignorar archivos temporales
+*.tmp
+*.temp
+*.bak
+*.old
+
+# Ignorar archivos de configuración local
+.env
+.env.local
+.env.*.local

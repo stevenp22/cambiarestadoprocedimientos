@@ -6,7 +6,14 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "docker:build": "docker build -t cambiarestadoprocedimientos .",
+    "docker:run": "docker run -p 3000:3000 --env-file .env cambiarestadoprocedimientos",
+    "docker:restart": "pnpm docker:build && pnpm docker:run",
+    "docker:stop": "docker stop cambiarestadoprocedimientos",
+    "docker:rm": "docker rm cambiarestadoprocedimientos",
+    "docker:logs": "docker logs cambiarestadoprocedimientos",
+    "docker:prune": "docker system prune -f"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
