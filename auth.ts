@@ -7,6 +7,7 @@ import { buscarUsuario } from "./app/lib/actions";
 
 export const { auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     Credentials({
       async authorize(credentials) {

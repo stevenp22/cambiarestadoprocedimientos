@@ -1,40 +1,23 @@
-# Etapa 1: Construcción de la aplicación
-FROM node:22 AS builder
+FROM node:23-slim
 
+# Set the working directory
 WORKDIR /app
 
-# Copiar archivos esenciales primero
-COPY package.json pnpm-lock.yaml ./
+# Copy package.json and package-lock.json (or yarn.lock)
+COPY package.json ./
+COPY package-lock.json ./
 
-# Instalar pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Install dependencies
+RUN npm install
 
-# Instalar dependencias
-RUN pnpm install --frozen-lockfile
-
-# Copiar el resto del código fuente
+# Copy the rest of the application code
 COPY . .
 
-# Construir la aplicación Next.js
-RUN pnpm build
+# Build the Next.js application
+RUN npm run build
 
-# Etapa 2: Servidor de producción
-FROM node:22 AS runner
-
-WORKDIR /app
-
-# Instalar pnpm en la etapa de producción
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-# Copiar archivos necesarios desde la etapa de construcción
-COPY --from=builder /app/package.json /app/pnpm-lock.yaml ./
-COPY --from=builder /app/.next .next
-COPY --from=builder /app/public public
-COPY --from=builder /app/node_modules node_modules
-
-# Exponer el puerto
+# Expose the port the app runs on
 EXPOSE 3000
 
-# Iniciar la aplicación
-CMD ["pnpm", "exec", "next", "start", "-p", "3000", "-H", "0.0.0.0"]
-
+# Start the application
+CMD ["npm", "start"]
