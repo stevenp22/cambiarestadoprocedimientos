@@ -8,6 +8,7 @@ COPY package.json ./
 COPY package-lock.json ./
 
 # Install dependencies
+RUN apt install net-tools 
 RUN npm install
 
 # Copy the rest of the application code
