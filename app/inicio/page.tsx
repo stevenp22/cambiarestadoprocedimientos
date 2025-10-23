@@ -1,258 +1,200 @@
-"use client"; // Indica que este archivo es un componente cliente en Next.js.
-import { useState } from "react"; // Importa el hook useState para manejar estados en el componente.
+"use client";
+import { useState } from "react";
 import {
   buscarProcedimientos,
   cambiarEstadoProcedimientos,
-} from "../lib/actions"; // Importa la función para buscar procedimientos desde una librería externa.
-import { Procedimiento, ProcedimientoWithIndex } from "../lib/definitions"; // Importa las definiciones de tipos para procedimientos.
+  cambiarEstadoProcedimientosTramite,
+} from "../lib/actions";
+import { Procedimiento, ProcedimientoWithIndex } from "../lib/definitions";
+import { set } from "zod";
+import { time } from "console";
 
 export default function Page() {
-  // Define el componente principal de la página.
-  const [documento, setDocumento] = useState(""); // Estado para almacenar el documento ingresado por el usuario.
-  const [procedimientos, setProcedimientos] = useState<Procedimiento[]>([]); // Estado para almacenar los procedimientos obtenidos.
-  const [error, setError] = useState(""); // Estado para manejar mensajes de error.
-  const [loading, setLoading] = useState(false); // Estado para indicar si se está cargando información.
-  const [procedimientosSeleccionados, setProcedimientosSeleccionados] =
-    useState<ProcedimientoWithIndex[]>([]); // Estado para almacenar los procedimientos seleccionados.
-  const [currentPage, setCurrentPage] = useState(0); // Estado para manejar la página actual en la paginación.
-  const [exito, setExito] = useState(false); // Estado para manejar mensajes de éxito.
+  const [documento, setDocumento] = useState("");
+  const [procedimientos, setProcedimientos] = useState<Procedimiento[]>([]);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [exito, setExito] = useState<string | null>(null);
 
-  const itemsPerPage = 10; // Número de procedimientos que se mostrarán por página.
-
-  // Función para buscar procedimientos basados en el documento ingresado.
-  function handleSearch() {
-    setLoading(true); // Activa el estado de carga.
-    setExito(false); // Limpia el estado de éxito.
-    setError(""); // Limpia cualquier mensaje de error.
-    setProcedimientos([]); // Limpia los procedimientos obtenidos.
-    setCurrentPage(0); // Reinicia la página actual a la primera.
-    setProcedimientosSeleccionados([]); // Limpia los procedimientos seleccionados.
-    buscarProcedimientos(documento) // Llama a la función para buscar procedimientos.
-      .then((resultado) => {
-        setExito(false); // Limpia el estado de éxito.
-        if (resultado) {
-          // Si se obtienen resultados...
-          setProcedimientos(resultado); // Actualiza el estado con los procedimientos obtenidos.
-          setError(""); // Limpia cualquier mensaje de error.
-        } else {
-          // Si no hay resultados...
-          setError("No se encontraron procedimientos."); // Muestra un mensaje de error.
-        }
-      })
-      .catch((error) => {
-        // Maneja errores en la búsqueda.
-        console.error("Error al buscar procedimientos:", error); // Muestra el error en la consola.
-      })
-      .finally(() => {
-        // Ejecuta esto al finalizar la búsqueda, sin importar si tuvo éxito o no.
-        setLoading(false); // Desactiva el estado de carga.
-        if (procedimientos.length === 0) {
-          // Si no hay procedimientos...
-          setError("No se encontraron procedimientos."); // Muestra un mensaje de error.
-        }
-      });
-  }
-
-  // Función para limpiar los resultados y reiniciar los estados.
-  function handleClear() {
-    setProcedimientos([]); // Limpia los procedimientos.
-    setError(""); // Limpia los mensajes de error.
-    setDocumento(""); // Limpia el documento ingresado.
-    setCurrentPage(0); // Reinicia la página actual a la primera.
-    setLoading(false); // Desactiva el estado de carga.
-    setProcedimientosSeleccionados([]); // Limpia los procedimientos seleccionados.
-    setExito(false); // Limpia el estado de éxito.
-  }
-
-  // Función para manejar el cambio de estado de los checkboxes.
-  function handleCheckboxChange(
-    event: React.ChangeEvent<HTMLInputElement>, // Evento del checkbox.
-    index: number // Índice del procedimiento en la lista.
-  ) {
-    if (event.target.checked) {
-      // Si el checkbox se selecciona...
-      setProcedimientosSeleccionados((prev) => [
-        ...prev, // Mantiene los procedimientos seleccionados previamente.
-        { ...procedimientos[index], index }, // Agrega el nuevo procedimiento seleccionado.
-      ]);
-    } else {
-      // Si el checkbox se deselecciona...
-      setProcedimientosSeleccionados(
-        (prev) => prev.filter((item) => item.index !== index) // Elimina el procedimiento deseleccionado.
-      );
-    }
-    console.log("Procedimientos seleccionados:", procedimientosSeleccionados); // Muestra los procedimientos seleccionados en la consola.
-  }
-
-  // Función para cambiar de página en la paginación.
-  function changePage(direction: "next" | "prev") {
-    if (
-      direction === "next" && // Si se quiere avanzar a la siguiente página...
-      (currentPage + 1) * itemsPerPage < procedimientos.length // Y hay más procedimientos disponibles...
-    ) {
-      setCurrentPage(currentPage + 1); // Avanza a la siguiente página.
-    } else if (direction === "prev" && currentPage > 0) {
-      // Si se quiere retroceder y no está en la primera página...
-      setCurrentPage(currentPage - 1); // Retrocede a la página anterior.
-    }
-  }
-
-  // Obtiene los procedimientos que se mostrarán en la página actual.
+  const itemsPerPage = 10;
+  const [currentPage, setCurrentPage] = useState(0);
   const currentProcedimientos = procedimientos.slice(
-    currentPage * itemsPerPage, // Índice inicial basado en la página actual.
-    (currentPage + 1) * itemsPerPage // Índice final basado en la página actual.
+    currentPage * itemsPerPage,
+    (currentPage + 1) * itemsPerPage
   );
 
-  const handleAplicarProcedimientos = () => {
-    // Función para aplicar los procedimientos seleccionados.
-    cambiarEstadoProcedimientos(procedimientosSeleccionados) // Llama a la función para cambiar el estado de los procedimientos seleccionados.
-      .then((response) => {
-        console.log("Procedimientos aplicados:", response); // Muestra la respuesta en la consola.
-      })
-      .catch((error) => {
-        console.error("Error al aplicar procedimientos:", error); // Maneja errores al aplicar procedimientos.
-      })
-      .finally(() => {
-        setProcedimientosSeleccionados([]); // Limpia los procedimientos seleccionados después de aplicar.
-        setExito(true); // Muestra un mensaje de éxito.
-      });
-  };
+  
+
+  async function handleSearch() {
+    setLoading(true);
+    setError("");
+    setExito(null);
+    setProcedimientos([]);
+    try {
+      const resultado = await buscarProcedimientos(documento);
+      if (resultado?.length > 0) {
+        setProcedimientos(resultado);
+      } else {
+        setError("No se encontraron procedimientos.");
+      }
+    } catch (err) {
+      setError("Error al buscar procedimientos.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleClear() {
+    setDocumento("");
+    setProcedimientos([]);
+    setError("");
+    setExito(null);
+  }
+
+  async function handleAplicar(procedimiento: Procedimiento) {
+    try {
+      await cambiarEstadoProcedimientos([{ ...procedimiento, index: 0 }]);
+      setExito("Procedimiento aplicado correctamente"); // Establecer mensaje de éxito
+
+      // Recargar los procedimientos actualizados
+      const procedimientosActualizados = await buscarProcedimientos(documento); // Volver a buscar los procedimientos actualizados
+      if (procedimientosActualizados?.length >= 0) {
+      setProcedimientos(procedimientosActualizados);
+      }
+      // Limpiar mensaje de éxito después de 10 segundos
+      setTimeout (() => setExito(null), 10000);
+    } 
+    catch {
+      setError("Error al aplicar el procedimiento."); // Establecer mensaje de error
+
+      setTimeout (() => setError(""), 10000); // Limpiar mensaje de error después de 10 segundos
+    }
+  }
+
+  async function handleTramite(procedimiento: Procedimiento) {
+    try {
+      await cambiarEstadoProcedimientosTramite([{ ...procedimiento, index: 0 }]);
+      setExito("Procedimiento puesto en trámite correctamente");
+      
+      //Recarga el estado con los procedimientos actualizados
+      const procedimientosActualizados = await buscarProcedimientos(documento); // Volver a buscar los procedimientos actualizados
+      if (procedimientosActualizados?.length >= 0) {
+      setProcedimientos(procedimientosActualizados);
+      }
+
+      setTimeout (() => setExito(null), 10000); // Limpiar mensaje de éxito después de 10 segundos
+    
+    } 
+    catch {
+      setError("Error al poner el procedimiento en trámite.");
+
+      setTimeout (() => setError(""), 10000); // Limpiar mensaje de error después de 10 segundos
+    }
+  }
 
   return (
-    <div className="items-center justify-top h-screen bg-gray-100 pl-3 pt-3 pr-3">
-      {/* Contenedor principal de la página */}
-      {/* Título de la página */}
-      <h1 className="text-2xl text-black font-bold mb-4">
-        Buscar Procedimientos
+    <div className="min-h-screen bg-gray-100 p-6">
+      <h1 className="text-3xl font-bold text-blue-800 mb-6">
+        Gestión de Procedimientos
       </h1>
-      {/* Campo de entrada para el documento */}
-      <input
-        type="text"
-        placeholder="Ingrese el documento del paciente"
-        className="border border-black rounded p-2 mb-4 w-1/3 placeholder:text-black text-black"
-        value={documento} // Valor actual del documento.
-        onChange={(e) => setDocumento(e.target.value)} // Actualiza el estado al cambiar el valor.
-        required
-        autoComplete="off"
-      />
-      {/* Botón para buscar procedimientos */}
-      <button
-        type="submit"
-        className="bg-blue-500 text-white rounded p-2 hover:bg-blue-600 ml-3"
-        onClick={handleSearch} // Llama a la función de búsqueda.
-        disabled={!documento} // Desactiva el botón si no hay un documento ingresado.
-      >
-        Buscar
-      </button>
-      {/* Botón para limpiar resultados */}
-      <button
-        className="bg-red-500 text-white rounded p-2 hover:bg-red-600 ml-3"
-        onClick={handleClear} // Llama a la función para limpiar resultados.
-      >
-        Limpiar Resultados
-      </button>
-      {/* Mensaje de carga */}
-      {loading && !exito && <p className="text-black">Cargando...</p>}
-      {/* Mensaje de error si no hay procedimientos */}
-      {procedimientos.length === 0 && error && (
-        <p className="text-red-500">{error}</p>
+
+      {/* 🔍 Buscador */}
+      <div className="flex gap-3 mb-6">
+        <input
+          type="text"
+          placeholder="Documento del paciente..."
+          value={documento}
+          onChange={(e) => setDocumento(e.target.value)}
+          className="border border-gray-400 rounded-lg p-2 w-1/3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+        />
+        <button
+          onClick={handleSearch}
+          disabled={!documento}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg disabled:bg-blue-300"
+        >
+          Buscar
+        </button>
+        <button
+          onClick={handleClear}
+          className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg"
+        >
+          Limpiar
+        </button>
+      </div>
+
+      {/* ⚙️ Mensajes */}
+      {loading && <p className="text-blue-600 font-medium">Cargando...</p>}
+      {error && <p className="text-red-500">{error}</p>}
+      {exito && (
+        <div className="bg-green-100 border border-green-500 text-green-700 px-4 py-2 rounded mb-4">
+          {exito}
+        </div>
       )}
-      {/* Tabla de resultados si hay procedimientos */}
-      {procedimientos.length > 0 && !exito && (
-        <div className="mt-4">
-          <h2 className="text-xl text-black font-bold mb-2">
-            Resultados de la búsqueda:
+
+      {/* 📋 Resultados */}
+      {procedimientos.length > 0 && (
+        <div>
+          <h2 className="text-2xl text-blue-700 font-semibold mb-4">
+            Resultados de búsqueda
           </h2>
-          <table className="table-auto border-collapse border border-gray-400 w-full">
-            <thead>
-              <tr className="bg-blue-600 text-white">
-                <th className="border border-gray-400 px-4 py-2">Folio</th>
-                <th className="border border-gray-400 px-4 py-2">Código</th>
-                <th className="border border-gray-400 px-4 py-2">Fecha</th>
-                <th className="border border-gray-400 px-4 py-2">Acción</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentProcedimientos.map((procedimiento, index) => (
-                <tr
-                  key={index} // Clave única para cada fila.
-                  className={index % 2 === 0 ? "bg-blue-100" : "bg-blue-200"} // Alterna el color de fondo de las filas.
-                >
-                  <td className="border border-gray-400 text-black px-4 py-2">
-                    {procedimiento.HISCSEC}{" "}
-                    {/* Muestra el folio del procedimiento */}
-                  </td>
-                  <td className="border border-gray-400 text-black px-4 py-2">
-                    {procedimiento.HCPrcCod}{" "}
-                    {/* Muestra el código del procedimiento */}
-                  </td>
-                  <td className="border border-gray-400 text-black px-4 py-2">
-                    {new Date(procedimiento.HCFcHrOrd).toLocaleString("es-ES", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}{" "}
-                    {/* Formatea y muestra la fecha */}
-                  </td>
-                  <td className="border border-gray-400 text-black px-4 py-2">
-                    <input
-                      type="checkbox" // Checkbox para seleccionar el procedimiento.
-                      onChange={(e) =>
-                        handleCheckboxChange(
-                          e,
-                          currentPage * itemsPerPage + index // Calcula el índice global del procedimiento.
-                        )
-                      }
-                      checked={procedimientosSeleccionados.some(
-                        (item) =>
-                          item.index === currentPage * itemsPerPage + index // Verifica si el procedimiento está seleccionado.
-                      )}
-                    />
-                    {/* Checkbox para seleccionar el procedimiento */}
-                    <label className="ml-2 text-black">
-                      Seleccionar para aplicar
-                      {/* Etiqueta para el checkbox */}
-                    </label>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {/* Botones de paginación */}
-          <div className="flex justify-between mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {currentProcedimientos.map((p, idx) => (
+              <div
+                key={idx}
+                className="bg-white shadow-lg rounded-xl border border-gray-300 p-4"
+              >
+                <p className="font-semibold text-gray-800 mb-1">
+                  Folio: <span className="font-normal">{p.HISCSEC}</span>
+                </p>
+                <p className="text-gray-700 mb-1">
+                  Código: <span className="font-normal">{p.HCPrcCod}</span>
+                </p>
+                <p className="text-gray-700 mb-3">
+                  Fecha:{" "}
+                  <span className="font-normal">
+                    {new Date(p.HCFcHrOrd).toLocaleString("es-ES")}
+                  </span>
+                </p>
+
+                <div className="flex justify-between">
+                  <button
+                    onClick={() => handleTramite(p)}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-lg text-sm"
+                  >
+                    En trámite
+                  </button>
+                  <button
+                    onClick={() => handleAplicar(p)}
+                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm"
+                  >
+                    Aplicar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ⏩ Navegación */}
+          <div className="flex justify-between mt-6">
             <button
-              className="bg-gray-500 text-white rounded p-2 hover:bg-gray-600"
-              onClick={() => changePage("prev")} // Cambia a la página anterior.
-              disabled={currentPage === 0} // Desactiva si está en la primera página.
+              onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+              disabled={currentPage === 0}
+              className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg disabled:bg-gray-300"
             >
               Anterior
             </button>
             <button
-              className="bg-green-500 text-white rounded p-2 hover:bg-green-600"
-              onClick={handleAplicarProcedimientos} // Llama a la función para cambiar el estado de los procedimientos seleccionados.
-              disabled={procedimientosSeleccionados.length === 0} // Desactiva si no hay procedimientos seleccionados.
-            >
-              {" "}
-              Aplicar Procedimientos
-            </button>
-            <button
-              className="bg-gray-500 text-white rounded p-2 hover:bg-gray-600"
-              onClick={() => changePage("next")} // Cambia a la página siguiente.
-              disabled={
-                (currentPage + 1) * itemsPerPage >= procedimientos.length // Desactiva si no hay más páginas.
+              onClick={() =>
+                setCurrentPage((p) =>
+                  (p + 1) * itemsPerPage < procedimientos.length ? p + 1 : p
+                )
               }
+              disabled={(currentPage + 1) * itemsPerPage >= procedimientos.length}
+              className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg disabled:bg-gray-300"
             >
               Siguiente
             </button>
           </div>
-        </div>
-      )}
-      {/* Mensaje de éxito si se aplicaron procedimientos */}
-      {exito && (
-        <div className="mt-4 bg-green-200 text-green-800 p-4 rounded">
-          Procedimientos aplicados exitosamente.
         </div>
       )}
     </div>
