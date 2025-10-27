@@ -5,9 +5,7 @@ import {
   cambiarEstadoProcedimientos,
   cambiarEstadoProcedimientosTramite,
 } from "../lib/actions";
-import { Procedimiento, ProcedimientoWithIndex } from "../lib/definitions";
-import { set } from "zod";
-import { time } from "console";
+import { Procedimiento } from "../lib/definitions";
 
 export default function Page() {
   const [documento, setDocumento] = useState("");
@@ -23,8 +21,6 @@ export default function Page() {
     (currentPage + 1) * itemsPerPage
   );
 
-  
-
   async function handleSearch() {
     setLoading(true);
     setError("");
@@ -37,7 +33,7 @@ export default function Page() {
       } else {
         setError("No se encontraron procedimientos.");
       }
-    } catch (err) {
+    } catch {
       setError("Error al buscar procedimientos.");
     } finally {
       setLoading(false);
@@ -54,20 +50,15 @@ export default function Page() {
   async function handleAplicar(procedimiento: Procedimiento) {
     try {
       await cambiarEstadoProcedimientos([{ ...procedimiento, index: 0 }]);
-      setExito("Procedimiento aplicado correctamente"); // Establecer mensaje de éxito
-
-      // Recargar los procedimientos actualizados
-      const procedimientosActualizados = await buscarProcedimientos(documento); // Volver a buscar los procedimientos actualizados
+      setExito("Procedimiento aplicado correctamente");
+      const procedimientosActualizados = await buscarProcedimientos(documento);
       if (procedimientosActualizados?.length >= 0) {
-      setProcedimientos(procedimientosActualizados);
+        setProcedimientos(procedimientosActualizados);
       }
-      // Limpiar mensaje de éxito después de 10 segundos
-      setTimeout (() => setExito(null), 10000);
-    } 
-    catch {
-      setError("Error al aplicar el procedimiento."); // Establecer mensaje de error
-
-      setTimeout (() => setError(""), 10000); // Limpiar mensaje de error después de 10 segundos
+      setTimeout(() => setExito(null), 10000);
+    } catch {
+      setError("Error al aplicar el procedimiento.");
+      setTimeout(() => setError(""), 10000);
     }
   }
 
@@ -75,20 +66,14 @@ export default function Page() {
     try {
       await cambiarEstadoProcedimientosTramite([{ ...procedimiento, index: 0 }]);
       setExito("Procedimiento puesto en trámite correctamente");
-      
-      //Recarga el estado con los procedimientos actualizados
-      const procedimientosActualizados = await buscarProcedimientos(documento); // Volver a buscar los procedimientos actualizados
+      const procedimientosActualizados = await buscarProcedimientos(documento);
       if (procedimientosActualizados?.length >= 0) {
-      setProcedimientos(procedimientosActualizados);
+        setProcedimientos(procedimientosActualizados);
       }
-
-      setTimeout (() => setExito(null), 10000); // Limpiar mensaje de éxito después de 10 segundos
-    
-    } 
-    catch {
+      setTimeout(() => setExito(null), 10000);
+    } catch {
       setError("Error al poner el procedimiento en trámite.");
-
-      setTimeout (() => setError(""), 10000); // Limpiar mensaje de error después de 10 segundos
+      setTimeout(() => setError(""), 10000);
     }
   }
 
@@ -98,28 +83,46 @@ export default function Page() {
         Gestión de Procedimientos
       </h1>
 
-      {/* 🔍 Buscador */}
-      <div className="flex gap-3 mb-6">
-        <input
-          type="text"
-          placeholder="Documento del paciente..."
-          value={documento}
-          onChange={(e) => setDocumento(e.target.value)}
-          className="border border-gray-400 rounded-lg p-2 w-1/3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-        />
-        <button
-          onClick={handleSearch}
-          disabled={!documento}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg disabled:bg-blue-300"
-        >
-          Buscar
-        </button>
-        <button
-          onClick={handleClear}
-          className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg"
-        >
-          Limpiar
-        </button>
+{/* 🔍 Buscador + leyenda al lado derecho */}
+      <div className="flex items-start mb-6">
+        {/* Buscador y leyenda en línea */}
+        <div className="flex items-start gap-3">
+          <input
+            type="text"
+            placeholder="Documento del paciente..."
+            value={documento}
+            onChange={(e) => setDocumento(e.target.value)}
+            className="border border-gray-400 rounded-lg p-2 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+          />
+          <button
+            onClick={handleSearch}
+            disabled={!documento}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg disabled:bg-blue-300"
+          >
+            Buscar
+          </button>
+          <button
+            onClick={handleClear}
+            className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg"
+          >
+            Limpiar
+          </button>
+
+          {/* 🎨 Leyenda */}
+          <div className="bg-white border border-gray-300 rounded-lg shadow-md px-4 py-3 w-80">
+            <h3 className="text-md font-semibold text-blue-700 mb-2">
+              Cambiar procedimiento ordenado a:
+            </h3>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-5 h-5 border border-gray-400 bg-white rounded"></div>
+              <span className="text-gray-700 text-sm">En trámite (Blanco)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 bg-green-600 rounded"></div>
+              <span className="text-gray-700 text-sm">Aplicado (Verde)</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* ⚙️ Mensajes */}
@@ -141,10 +144,11 @@ export default function Page() {
             {currentProcedimientos.map((p, idx) => (
               <div
                 key={idx}
-                className="bg-white shadow-lg rounded-xl border border-gray-300 p-4"
+                className="bg-sky-50 hover:bg-sky-100 transition-all duration-200 shadow-lg rounded-xl border border-sky-200 p-4"
               >
-                <p className="font-semibold text-gray-800 mb-1">
-                  Folio: <span className="font-normal">{p.HISCSEC}</span>
+                <p className="text-gray-700 mb-1">
+                  Folio:{" "}
+                  <span className="font-normal">{p.HISCSEC}</span>
                 </p>
                 <p className="text-gray-700 mb-1">
                   Código: <span className="font-normal">{p.HCPrcCod}</span>
@@ -159,9 +163,9 @@ export default function Page() {
                 <div className="flex justify-between">
                   <button
                     onClick={() => handleTramite(p)}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-lg text-sm"
+                    className="bg-white border border-gray-400 text-gray-700 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-100 transition-colors"
                   >
-                    En trámite
+                    En trámite 
                   </button>
                   <button
                     onClick={() => handleAplicar(p)}
