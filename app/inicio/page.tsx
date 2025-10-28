@@ -13,21 +13,22 @@ export default function Page() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [exito, setExito] = useState<string | null>(null);
+  const [observacion, setObservacion] = useState("");
 
-  const itemsPerPage = 10;
+  const itemsPerPage = 6; // Mostrar 6 procedimientos inicialmente
   const [currentPage, setCurrentPage] = useState(0);
-  const currentProcedimientos = procedimientos.slice(
-    currentPage * itemsPerPage,
-    (currentPage + 1) * itemsPerPage
-  );
+  const [displayCount, setDisplayCount] = useState(itemsPerPage);
+  const currentProcedimientos = procedimientos.slice(0, displayCount);
 
   async function handleSearch() {
     setLoading(true);
     setError("");
     setExito(null);
     setProcedimientos([]);
+    setDisplayCount(itemsPerPage); // Resetear el contador al buscar
     try {
       const resultado = await buscarProcedimientos(documento);
+      console.log("Resultado de la búsqueda:", resultado);
       if (resultado?.length > 0) {
         setProcedimientos(resultado);
       } else {
@@ -83,9 +84,47 @@ export default function Page() {
         Gestión de Procedimientos
       </h1>
 
-{/* 🔍 Buscador + leyenda al lado derecho */}
-      <div className="flex items-start mb-6">
-        {/* Buscador y leyenda en línea */}
+      <div className="flex flex-col gap-4">
+
+        {/* 📝 Cuadro de texto fijo */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg shadow-md px-6 py-4 max-w-2xl">
+          <h3 className="text-lg font-semibold text-blue-800 mb-3 flex items-center">
+            <svg
+              className="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            Información Importante:
+          </h3>
+          <div className="space-y-2">
+            <p className="text-blue-700 text-sm leading-relaxed">
+              Antes de realizar el cambio de procedimiento, por favor asegúrese de
+              que sea el correcto.
+            </p>
+            <p className="text-gray-600 text-sm leading-relaxed">
+              En caso de error, debe realizar un ticket a sistemas incluyendo:
+            </p>
+            <ul className="list-disc list-inside text-gray-600 text-sm pl-2 space-y-1">
+              <li>Número de documento del paciente</li>
+              <li>Código del procedimiento</li>
+              <li>Folio del procedimiento</li>
+              <li>Estado cambiado por error</li>
+              <li>Estado al que se debe cambiar</li>
+              <li>Fecha de ordenado del procedimiento</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* 🔍 Barra de búsqueda y leyenda */}
         <div className="flex items-start gap-3">
           <input
             type="text"
@@ -140,7 +179,11 @@ export default function Page() {
           <h2 className="text-2xl text-blue-700 font-semibold mb-4">
             Resultados de búsqueda
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <p className="mb-4 text-gray-700">
+              Mostrando {currentProcedimientos.length} de {procedimientos.length} procedimientos
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             {currentProcedimientos.map((p, idx) => (
               <div
                 key={idx}
@@ -165,7 +208,7 @@ export default function Page() {
                     onClick={() => handleTramite(p)}
                     className="bg-white border border-gray-400 text-gray-700 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-100 transition-colors"
                   >
-                    En trámite 
+                    En trámite
                   </button>
                   <button
                     onClick={() => handleAplicar(p)}
@@ -179,24 +222,26 @@ export default function Page() {
           </div>
 
           {/* ⏩ Navegación */}
-          <div className="flex justify-between mt-6">
+          <div className="flex justify-center mt-6">
             <button
-              onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
-              disabled={currentPage === 0}
-              className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg disabled:bg-gray-300"
+              onClick={() => setDisplayCount(prev => prev + itemsPerPage)}
+              disabled={displayCount >= procedimientos.length}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg disabled:bg-blue-300 flex items-center gap-2"
             >
-              Anterior
-            </button>
-            <button
-              onClick={() =>
-                setCurrentPage((p) =>
-                  (p + 1) * itemsPerPage < procedimientos.length ? p + 1 : p
-                )
-              }
-              disabled={(currentPage + 1) * itemsPerPage >= procedimientos.length}
-              className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg disabled:bg-gray-300"
-            >
-              Siguiente
+              Ver más
+              <svg 
+                className="w-4 h-4" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
             </button>
           </div>
         </div>
